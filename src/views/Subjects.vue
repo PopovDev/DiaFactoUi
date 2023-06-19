@@ -3,6 +3,8 @@ import { useSubjectStore } from '@/stores/subject';
 import { WeekType } from '@/api/subject';
 import { ref, watch, watchEffect } from 'vue';
 import moment from 'moment';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 const subjectStore = useSubjectStore();
 const plainSubject = () => ({ name: '', teacher: '', info: '' });
 
@@ -19,6 +21,7 @@ const newSubjectTime = ref(plainSubjectTime());
 
 async function addSubject() {
     try {
+        newSubject.value.info = DOMPurify.sanitize(newSubject.value.info);
         await subjectStore.addSubject(newSubject.value);
         newSubject.value = plainSubject();
     } catch (e) {
@@ -27,10 +30,6 @@ async function addSubject() {
 }
 
 function addSubjectTime() {
-    //if end time is less than start time
-    //use moment.js
-  
-
     try {
         subjectStore.addSubjectTime(newSubjectTime.value);
         newSubjectTime.value = plainSubjectTime();
@@ -58,7 +57,7 @@ watchEffect(() => {
     }
 });
 
-function getSubjectById(id:number) {
+function getSubjectById(id: number) {
     return subjectStore.subjects.find((subject) => subject.id === id);
 }
 </script>
@@ -70,7 +69,7 @@ function getSubjectById(id:number) {
                 <div>{{ subject.id }}</div>
                 <div>{{ subject.name }}</div>
                 <div>{{ subject.teacher }}</div>
-                <div>{{ subject.info }}</div>
+                <div v-html="DOMPurify.sanitize(marked(subject.info))"></div>
                 <button @click="subjectStore.deleteSubject(subject.id)">Delete</button>
                 <hr />
             </li>
@@ -81,7 +80,7 @@ function getSubjectById(id:number) {
             <br>
             <input type="text" v-model="newSubject.teacher" placeholder="Teacher" maxlength="64" minlength="3" />
             <br>
-            <input type="text" v-model="newSubject.info" placeholder="Info" />
+            <textarea v-model="newSubject.info" placeholder="Info" maxlength="1024" minlength="3"></textarea>
             <br>
 
             <button type="submit">Add</button>
@@ -127,7 +126,8 @@ function getSubjectById(id:number) {
             <input type="time" v-model="newSubjectTime.timeEnd" placeholder="Time end" step="15" />
             <br>
             <select v-model="newSubjectTime.weekType">
-                <option v-for="weekType in 3" :key="weekType - 1" :value="weekType - 1">{{ WeekType[weekType - 1] }}</option>
+                <option v-for="weekType in 3" :key="weekType - 1" :value="weekType - 1">{{ WeekType[weekType - 1] }}
+                </option>
             </select>
             <br>
 
